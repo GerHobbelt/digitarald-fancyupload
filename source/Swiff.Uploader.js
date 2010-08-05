@@ -308,7 +308,7 @@ Swiff.Uploader = new Class({
 		document.cookie.split(/;\s*/).each(function(cookie) {
 			cookie = cookie.split('=');
 			if (cookie.length == 2) {
-				hash[decodeURIComponent(cookie[0])] = decodeURIComponent(cookie[1]);
+			    hash['\"' + decodeURIComponent(cookie[0]) + '\"'] = decodeURIComponent(cookie[1]);
 			}
 		});
 
