@@ -18,3 +18,7 @@ completely styleable via CSS and XHTML and uses [MooTools][] to work in all mode
 - Swiff
 - FileReference
 - ExternalInterface
+
+### Note!
+* An attempt to upgrade FancyUpload2 to work with mootools 1.3 in nocompat mode
+* Attention: You have to fix this bug in mootools-1.3.0-core if you are using nocompat mode (https://mootools.lighthouseapp.com/projects/2706/tickets/1039-swiff)
