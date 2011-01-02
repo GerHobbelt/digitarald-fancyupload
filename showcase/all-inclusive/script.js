@@ -156,7 +156,7 @@ window.addEvent('domready', function() {
 	var timer;
 	
 	togglers.addEvent('mouseenter', function() {
-		$clear(timer);
+		clearTimeout(timer);
 		timer = magic.display.delay(100, magic, this.getNext());
 	});
 	*/

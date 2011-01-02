@@ -6,6 +6,9 @@ FancyUpload is a file-input replacement which features an unobtrusive, multiple-
 menu and queued upload with an animated progress bar. It is easy to setup, is server independent,
 completely styleable via CSS and XHTML and uses [MooTools][] to work in all modern browsers.
 
+### Depencies
+  Mootools 1.3
+
 ### Keywords: {#keywords}
 
 - MooTools

@@ -20,7 +20,7 @@ var FancyUpload2 = new Class({
 		// compat
 		limitSize: 0,
 		limitFiles: 0,
-		validateFile: $lambda(true)
+		validateFile: Function.from(true)
 	},
 
 	initialize: function(status, list, options) {
@@ -189,7 +189,7 @@ FancyUpload2.File = new Class({
 		
 		if (this.response.error) {
 			var msg = MooTools.lang.get('FancyUpload', 'errors')[this.response.error] || '{error} #{code}';
-			this.errorMessage = msg.substitute($extend({
+			this.errorMessage = msg.substitute(Object.append({
 				name: this.name,
 				size: Swiff.Uploader.formatUnit(this.size, 'b')
 			}, this.response));
@@ -209,7 +209,7 @@ FancyUpload2.File = new Class({
 
 	onRemove: function() {
 		this.element.getElements('a').setStyle('visibility', 'hidden');
-		this.element.fade('out').retrieve('tween').chain(Element.destroy.bind(Element, this.element));
+		this.element.fade('out').retrieve('tween').chain(Element.destroy.pass(this.element,Element));
 	}
 	
 });

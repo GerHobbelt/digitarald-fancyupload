@@ -115,10 +115,10 @@ Swiff.Uploader = new Class({
 		};
 
 		var path = this.options.path;
-		if (!path.contains('?')) path += '?noCache=' + $time(); // cache in IE
+		if (!path.contains('?')) path += '?noCache=' + Date.now; // cache in IE
 
 		// container options for Swiff class
-		this.options.container = this.box = new Element('span', {'class': 'swiff-uploader-box'}).inject($(this.options.container) || document.body);
+		this.options.container = this.box = new Element('span', {'class': 'swiff-uploader-box',events: { click: function(e) { e.stop(); } }}).inject($(this.options.container) || document.body);
 
 		// target 
 		this.target = $(this.options.target);
@@ -142,18 +142,18 @@ Swiff.Uploader = new Class({
 				width: '100%'
 			});
 			
-			this.target.addEvent('mouseenter', this.reposition.bind(this, []));
+			this.target.addEvent('mouseenter', this.reposition.bind(this));
 			
 			// button interactions, relayed to to the target
 			this.addEvents({
-				buttonEnter: this.targetRelay.bind(this, ['mouseenter']),
-				buttonLeave: this.targetRelay.bind(this, ['mouseleave']),
-				buttonDown: this.targetRelay.bind(this, ['mousedown']),
-				buttonDisable: this.targetRelay.bind(this, ['disable'])
+				buttonEnter: this.targetRelay.pass('mouseenter',this),
+				buttonLeave: this.targetRelay.pass('mouseleave',this),
+				buttonDown: this.targetRelay.pass('mousedown',this),
+				buttonDisable: this.targetRelay.pass('disable',this)
 			});
 			
 			this.reposition();
-			window.addEvent('resize', this.reposition.bind(this, []));
+			window.addEvent('resize', this.reposition.bind(this));
 		} else {
 			this.parent(path);
 		}
@@ -204,7 +204,7 @@ Swiff.Uploader = new Class({
 
 	update: function(data) {
 		// the data is saved right to the instance 
-		$extend(this, data);
+		Object.append(this, data);
 		this.fireEvent('queue', [this], 10);
 		return this;
 	},
@@ -315,8 +315,8 @@ Swiff.Uploader = new Class({
 		});
 
 		var data = this.options.data || {};
-		if ($type(append) == 'string') data[append] = hash;
-		else $extend(data, hash);
+		if (typeOf(append) == 'string') data[append] = hash;
+		else Object.append(data, hash);
 
 		this.setOptions({data: data});
 	},
@@ -344,7 +344,7 @@ Swiff.Uploader = new Class({
 		}
 
 		if (failraw || fail.length) {
-			fail.extend((failraw) ? failraw.map(function(data) {
+			fail.append((failraw) ? failraw.map(function(data) {
 				return new cls(this, data);
 			}, this) : []).each(function(file) {
 				file.invalidate().render();
@@ -360,7 +360,7 @@ Swiff.Uploader = new Class({
 
 });
 
-$extend(Swiff.Uploader, {
+Object.append(Swiff.Uploader, {
 
 	STATUS_QUEUED: 0,
 	STATUS_RUNNING: 1,
@@ -430,7 +430,7 @@ Swiff.Uploader.File = new Class({
 	},
 
 	update: function(data) {
-		return $extend(this, data);
+		return Object.append(this, data);
 	},
 
 	validate: function() {
@@ -463,7 +463,7 @@ Swiff.Uploader.File = new Class({
 		if (options) {
 			if (options.url) options.url = Swiff.Uploader.qualifyPath(options.url);
 			this.base.remote('xFileSetOptions', this.id, options);
-			this.options = $merge(this.options, options);
+			this.options = Object.merge(this.options, options);
 		}
 		return this;
 	},
