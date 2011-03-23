@@ -3,7 +3,7 @@
  * Swiff.Uploader Example Backend
  *
  * This file represents a simple logging, validation and output.
- *  *
+ *
  * WARNING: If you really copy these lines in your backend without
  * any modification, there is something seriously wrong! Drop me a line
  * and I can give you a good rate for fancy and customised installation.

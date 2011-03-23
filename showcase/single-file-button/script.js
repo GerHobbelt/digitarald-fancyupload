@@ -8,16 +8,18 @@
 
 window.addEvent('domready', function() {
 
+	//var $ = document.id, $$ = document.getElements;
+
 	// One Roar instance for our notofications, positioned in the top-right corner of our demo.
 	var log = new Roar({
 		container: $('demo'),
 		position: 'topRight',
 		duration: 5000
 	});
-	
+
 	var link = $('select-0');
 	var linkIdle = link.get('html');
-	
+
 	function linkUpdate() {
 		if (!swf.uploading) return;
 		var size = Swiff.Uploader.formatUnit(swf.size, 'b');
@@ -48,20 +50,20 @@ window.addEvent('domready', function() {
 		appendCookieData: true,
 		onQueue: linkUpdate,
 		onFileComplete: function(file) {
-			
+
 			// We *don't* save the uploaded images, we only take the md5 value and create a monsterid ;)
 			if (file.response.error) {
 				log.alert('Failed Upload', 'Uploading <em>' + this.fileList[0].name + '</em> failed, please try again. (Error: #' + this.fileList[0].response.code + ' ' + this.fileList[0].response.error + ')');
 			} else {
 				var md5 = JSON.decode(file.response.text, true).hash; // secure decode
-				
+
 				log.alert('Successful Upload', 'an MD5 hash was created from <em>' + this.fileList[0].name + '</em>: <code>' + md5 + '</code>.<br />gravatar.com generated a fancy and unique monsterid for it, since we did not save the image.');
-				
+
 				var img = $('demo-portrait');
 				img.setStyle('background-image', img.getStyle('background-image').replace(/\w{32}/, md5));
 				img.highlight();
 			}
-			
+
 			file.remove();
 			this.setEnabled(true);
 		},

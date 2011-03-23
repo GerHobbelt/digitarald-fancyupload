@@ -19,6 +19,14 @@ completely styleable via CSS and XHTML and uses [MooTools][] to work in all mode
 - FileReference
 - ExternalInterface
 
-### Note!
-* An attempt to upgrade FancyUpload2 to work with mootools 1.3 in nocompat mode
-* Attention: You have to fix this bug in mootools-1.3.0-core if you are using nocompat mode (https://mootools.lighthouseapp.com/projects/2706/tickets/1039-swiff)
+Build (cr. [@cpojer](http://github.com/cpojer))
+-----------------------------------------------
+
+Build via [Packager](http://github.com/kamicane/packager), requires [MooTools Core](http://github.com/mootools/mootools-core) and [MooTools Class-Extras](http://github.com/cpojer/mootools-class-extras) to be registered to Packager already
+
+	packager register /path/to/FancyUploader
+	packager build FancyUploader/* > fancy-uploader.js
+
+To build this plugin without external dependencies use
+
+	packager build FancyUploader/* +use-only FancyUploader > FancyUploader.js

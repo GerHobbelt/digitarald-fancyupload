@@ -1,13 +1,20 @@
-/**
- * Uploader
- *
- * @version    1.0
- *
- * @license    MIT License
- *
- * @author    Harald Kirschner <mail [at] digitarald [dot] de>
- * @copyright  Authors
- */
+/*
+---
+name: Uploader
+
+description: Uploader
+
+requires: [Core/Browser, Core/Class, Core/Class.Extras, Core/Element, Core/Element.Event, Core/Element.Dimensions]
+
+provides: [Uploader, Uploader.File]
+
+version: 1.1
+
+license: MIT License
+
+author: Harald Kirschner <http://digitarald.de>
+...
+*/
 
 var Uploader = new Class({
 
@@ -85,29 +92,29 @@ var Uploader = new Class({
 
   createIBody: function() {
     var doc = this.iframe.contentWindow.document;
-    
+
     if (!doc || !doc.body) return;
     clearTimeout(this.runner);
-        
+
     var align = (Browser.Engine.trident) ? 'left' : 'right';
     doc.body.innerHTML = '<form method="post" enctype="multipart/form-data" id="form">' +
       '<input type="file" id="file" style="position:absolute;' + align + ':0;top:0" />' +
-      '<input type="submit" /><div id="data"></div></form>' + 
+      '<input type="submit" /><div id="data"></div></form>' +
       '<style type="text/css">*{margin:0;padding:0;border:0;overflow:hidden;cursor:pointer;}</style>';
-    
+
     this.doc = doc;
-    
+
     this.processIBody.delay(50, this);
   },
-  
+
   processIBody: function() {
     this.doc;
-    
+
     if (!(this.file = this.doc.getElementById('file')) || !this.file.offsetHeight) {
       this.createIBody(); // WTF: FF forgot to update the HTML?!
       return;
     }
-    
+
     Object.append(this.file, {
       onmousedown: function() {
         if (Browser.Engine.presto) return true;
@@ -144,7 +151,7 @@ var Uploader = new Class({
     this.fireEvent('onSelectSuccess', [[ret]]);
 
     if (this.options.instantStart) this.start();
-    
+
     this.file = null;
 
     this.createIFrame();
@@ -206,7 +213,7 @@ Uploader.File = new Class({
   Extends: Events,
 
   Implements: Options,
-  
+
   options: {
     url: null,
     method: null,
@@ -276,7 +283,7 @@ Uploader.File = new Class({
 
     var win = new Window(this.iframe.contentWindow);
     var doc = new Document(win.document);
-    
+
     this.response = {
       window: win,
       document: doc,
@@ -295,15 +302,15 @@ Uploader.File = new Class({
     if (this.status != Uploader.STATUS_QUEUED) return this;
 
     var base = this.base.options, options = this.options;
-    
+
     var merged = {};
     for (var key in base) {
       merged[key] = (this.options[key] != null) ? this.options[key] : base[key];
     }
-    
+
     merged.url = merged.url || location.href;
     merged.method = (merged.method) ? (merged.method.toLowerCase()) : 'post';
-    
+
     var doc = this.iframe.contentWindow.document;
 
     var more = doc.getElementById('data');
@@ -313,9 +320,9 @@ Uploader.File = new Class({
         if (typeOf(base.data) == 'string') merged.data = base.data + '&' + options.data;
         else merged.data = Object.merge(base.data, options.data);
       }
-      
+
       var query = (typeOf(merged.data) == 'string') ? merged.data : Hash.toQueryString(merged.data);
-      
+
       if (query.length) {
         if (merged.method == 'get') {
           if (data.length) merged.url += ((merged.url.contains('?')) ? '&' : '?') + query;
@@ -330,7 +337,7 @@ Uploader.File = new Class({
           }).join('');
         }
       }
-      
+
     }
 
     var form = doc.forms[0];

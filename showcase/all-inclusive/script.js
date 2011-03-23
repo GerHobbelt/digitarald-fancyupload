@@ -8,6 +8,8 @@
 
 window.addEvent('domready', function() {
 
+	//var $ = document.id, $$ = document.getElements;
+
 	// reusing elements
 	var list = $('file-list-0');
 	var listFail = $('file-list-1');
@@ -35,7 +37,7 @@ window.addEvent('domready', function() {
 			// More validation here
 
 			this.ui = {};
-			
+
 			this.ui.element = new Element('li', {'class': 'file', id: 'file-' + this.id});
 
 			this.ui.title = new Element('span', {'class': 'file-title', href: '#file-' + this.id, text: this.name});
@@ -146,15 +148,15 @@ window.addEvent('domready', function() {
 	/**
 	 * Updating settings
 	 */
-	
+
 	/* The *famous* Accordion-by-mouseover. Hidden between the lines and not enabled <8+)
-	 * 
+	 *
 	var settings = $('settings');
 	var togglers = settings.getElements('label span:index(0)');
 	var magic = new Accordion(togglers, settings.getElements('label span + span'));
-	
+
 	var timer;
-	
+
 	togglers.addEvent('mouseenter', function() {
 		clearTimeout(timer);
 		timer = magic.display.delay(100, magic, this.getNext());
@@ -203,7 +205,7 @@ window.addEvent('domready', function() {
 		swf.setEnabled(!!(this.checked));
 		this.getParent().highlight();
 	});
-	
+
 
 	/**
 	 * Uploader instance

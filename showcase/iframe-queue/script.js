@@ -8,6 +8,8 @@
 
 window.addEvent('domready', function() {
 
+	//var $ = document.id, $$ = document.getElements;
+
 	// reusing elements
 	var list = $('file-list-0');
 
@@ -41,7 +43,7 @@ window.addEvent('domready', function() {
 			});
 
 			this.ui = {};
-			
+
 			this.ui.element = new Element('li', {'class': 'file'});
 			this.ui.title = new Element('span', {'class': 'file-title', text: this.name});
 
@@ -57,7 +59,7 @@ window.addEvent('domready', function() {
 				this.ui.title,
 				this.ui.cancel
 			).inject(list).highlight();
-			
+
 			this.base.reposition();
 
 			return this.parent();
@@ -70,7 +72,7 @@ window.addEvent('domready', function() {
 		onStop: function() {
 			this.remove();
 		},
-		
+
 		onRemove: function() {
 			// stop removes the file entry
 			this.ui = this.ui.element.destroy();
@@ -79,7 +81,7 @@ window.addEvent('domready', function() {
 		onComplete: function() {
 			// clean up
 			this.ui.element.removeClass('file-running');
-			
+
 			this.ui.cancel = this.ui.cancel.destroy();
 
 			new Element('input', {type: 'checkbox', 'checked': true})
