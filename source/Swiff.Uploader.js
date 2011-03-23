@@ -259,7 +259,7 @@ Swiff.Uploader = new Class({
     // update coordinates, manual or automatically
     coords = coords || (this.target && this.target.offsetHeight)
       ? this.target.getCoordinates(this.box.getOffsetParent())
-      : {top: window.getScrollTop(), left: 0, width: 40, height: 40}
+      : {top: window.getScrollTop(), left: 0, width: 40, height: 40};
     this.box.setStyles(coords);
     this.fireEvent('reposition', [coords, this.box, this.target]);
   },
@@ -317,7 +317,7 @@ Swiff.Uploader = new Class({
     document.cookie.split(/;\s*/).each(function(cookie) {
       cookie = cookie.split('=');
       if (cookie.length == 2) {
-        hash['\"' + decodeURIComponent(cookie[0]) + '\"'] = decodeURIComponent(cookie[1]);
+        hash['\"' + decodeURIComponent(cookie[0]) + '\"'] = decodeURIComponent(cookie[1]);    // allow session IDs such as the ASP.NET ones, which come with an underscore, etc.
       }
     });
 
