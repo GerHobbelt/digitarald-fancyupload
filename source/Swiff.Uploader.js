@@ -12,349 +12,356 @@
 
 Swiff.Uploader = new Class({
 
-	Extends: Swiff,
+  Extends: Swiff,
 
-	Implements: Events,
+  Implements: Events,
 
-	options: {
-		path: 'Swiff.Uploader.swf',
+  options: {
+    path: 'Swiff.Uploader.swf',
 
-		target: null,
-		zIndex: 9999,
+    target: null,
+    zIndex: 9999,
 
-		height: 30,
-		width: 100,
-		callBacks: null,
-		params: {
-			wMode: 'opaque',
-			menu: 'false',
-			allowScriptAccess: 'always'
-		},
+    callBacks: null,
+    params: {
+      wMode: 'opaque',
+      menu: 'false',
+      allowScriptAccess: 'always'
+    },
 
-		typeFilter: null,
-		multiple: true,
-		queued: true,
-		verbose: false,
+    typeFilter: null,
+    multiple: true,
+    queued: true,
+    verbose: false,
+    height: 30,
+    width: 100,
+    passStatus: null,
 
-		url: null,
-		method: null,
-		data: null,
-		mergeData: true,
-		fieldName: null,
+    url: null,
+    method: null,
+    data: null,
+    mergeData: true,
+    fieldName: null,
 
-		fileSizeMin: 1,
-		fileSizeMax: null, // Official limit is 100 MB for FileReference, but I tested up to 2Gb!
-		allowDuplicates: false,
-		timeLimit: (Browser.Platform.linux) ? 0 : 30,
+    fileSizeMin: 1,
+    fileSizeMax: null, // Official limit is 100 MB for FileReference, but I tested up to 2Gb!
+    allowDuplicates: false,
+    timeLimit: (Browser.Platform.linux) ? 0 : 30,
 
-		buttonImage: null,
-		policyFile: null,
+    policyFile: null,
+    buttonImage: null,
 
-		fileListMax: 0,
-		fileListSizeMax: 0,
+    fileListMax: 0,
+    fileListSizeMax: 0,
 
-		instantStart: false,
-		appendCookieData: false,
+    instantStart: false,
+    appendCookieData: false,
 
-		fileClass: null
-		/*
-		onLoad: $empty,
-		onFail: $empty,
-		onStart: $empty,
-		onQueue: $empty,
-		onComplete: $empty,
-		onBrowse: $empty,
-		onDisabledBrowse: $empty,
-		onCancel: $empty,
-		onSelect: $empty,
-		onSelectSuccess: $empty,
-		onSelectFail: $empty,
+    fileClass: null
+    /*
+    onLoad: $empty,
+    onFail: $empty,
+    onStart: $empty,
+    onQueue: $empty,
+    onComplete: $empty,
+    onBrowse: $empty,
+    onDisabledBrowse: $empty,
+    onCancel: $empty,
+    onSelect: $empty,
+    onSelectSuccess: $empty,
+    onSelectFail: $empty,
 
-		onButtonEnter: $empty,
-		onButtonLeave: $empty,
-		onButtonDown: $empty,
-		onButtonDisable: $empty,
+    onButtonEnter: $empty,
+    onButtonLeave: $empty,
+    onButtonDown: $empty,
+    onButtonDisable: $empty,
 
-		onFileStart: $empty,
-		onFileStop: $empty,
-		onFileRequeue: $empty,
-		onFileOpen: $empty,
-		onFileProgress: $empty,
-		onFileComplete: $empty,
-		onFileRemove: $empty,
+    onFileStart: $empty,
+    onFileStop: $empty,
+    onFileRequeue: $empty,
+    onFileOpen: $empty,
+    onFileProgress: $empty,
+    onFileComplete: $empty,
+    onFileRemove: $empty,
 
-		onBeforeStart: $empty,
-		onBeforeStop: $empty,
-		onBeforeRemove: $empty
-		*/
+    onBeforeStart: $empty,
+    onBeforeStop: $empty,
+    onBeforeRemove: $empty
+    */
+  },
+
+  initialize: function(options) {
+    // protected events to control the class, added
+    // before setting options (which adds own events)
+    this.addEvent('load', this.initializeSwiff, true)
+      .addEvent('select', this.processFiles, true)
+      .addEvent('complete', this.update, true)
+      .addEvent('fileRemove', function(file) {
+        this.fileList.erase(file);
+      }.bind(this), true);
+
+    this.setOptions(options);
+
+    // callbacks are no longer in the options, every callback
+    // is fired as event, this is just compat
+    if (this.options.callBacks) {
+      Object.each(this.options.callBacks, function(fn, name) {
+        this.addEvent(name, fn);
+      }, this);
+    }
+
+    this.options.callBacks = {
+      fireCallback: this.fireCallback.bind(this)
+    };
+
+    var path = this.options.path;
+    if (!path.contains('?')) path += '?noCache=' + Date.now(); // cache in IE
+
+    // container options for Swiff class
+    this.options.container = this.box = new Element('span', {'class': 'swiff-uploader-box',events: { click: function(e) { e.stopPropagation(); } }}).inject($(this.options.container) || document.body);
+
+    // target
+    this.target = $(this.options.target);
+    if(this.target) {
+      var scroll = window.getScroll();
+      this.box.setStyles({
+        position: 'absolute',
+        visibility: 'visible',
+        zIndex: this.options.zIndex,
+        overflow: 'hidden',
+        height: 1, width: 1,
+        top: scroll.y, left: scroll.x
+      });
+
+      // we force wMode to transparent for the overlay effect
+      this.parent(path, {
+        params: {
+          wMode: 'transparent'
+        },
+        height: '100%',
+        width: '100%'
+      });
+
+      this.target.addEvent('mouseenter', this.reposition.bind(this));
+
+      // button interactions, relayed to to the target
+      this.addEvents({
+        buttonEnter: this.targetRelay.pass('mouseenter',this),
+        buttonLeave: this.targetRelay.pass('mouseleave',this),
+        buttonDown: this.targetRelay.pass('mousedown',this),
+        buttonDisable: this.targetRelay.pass('disable',this)
+      });
+
+      this.reposition();
+      window.addEvent('resize', this.reposition.bind(this));
+    } else {
+      this.parent(path);
+    }
+
+    this.inject(this.box);
+
+    this.fileList = [];
+
+    this.size = this.uploading = this.bytesLoaded = this.percentLoaded = 0;
+
+    if (Browser.Plugins.Flash.version < 9) {
+      this.fireEvent('fail', ['flash']);
+    } else {
+      this.verifyLoad.delay(1000, this);
+    }
+  },
+
+  // overwrite error in mootools 1.3 (append instead of extend)
+  remote: function(){
+		return Swiff.remote.apply(Swiff, [this.toElement()].append(arguments));
 	},
 
-	initialize: function(options) {
-		// protected events to control the class, added
-		// before setting options (which adds own events)
-		this.addEvent('load', this.initializeSwiff, true)
-			.addEvent('select', this.processFiles, true)
-			.addEvent('complete', this.update, true)
-			.addEvent('fileRemove', function(file) {
-				this.fileList.erase(file);
-			}.bind(this), true);
+  verifyLoad: function() {
+    if (this.loaded) return;
+    if (!this.object.parentNode) {
+      this.fireEvent('fail', ['disabled']);
+    } else if (this.object.style.display == 'none') {
+      this.fireEvent('fail', ['hidden']);
+    } else if (!this.object.offsetWidth) {
+      this.fireEvent('fail', ['empty']);
+    }
+  },
 
-		this.setOptions(options);
+  fireCallback: function(name, args) {
+    // file* callbacks are relayed to the specific file
+    if (name.substr(0, 4) == 'file') {
+      // updated queue data is the second argument
+      if (args.length > 1) this.update(args[1]);
+      var data = args[0];
 
-		// callbacks are no longer in the options, every callback
-		// is fired as event, this is just compat
-		if (this.options.callBacks) {
-			Hash.each(this.options.callBacks, function(fn, name) {
-				this.addEvent(name, fn);
-			}, this);
-		}
+      var file = this.findFile(data.id);
+      this.fireEvent(name, file || data, 5);
+      if (file) {
+        var fire = name.replace(/^file([A-Z])/, function($0, $1) {
+          return $1.toLowerCase();
+        });
+        file.update(data).fireEvent(fire, [data], 10);
+      }
+    } else {
+      this.fireEvent(name, args, 5);
+    }
+  },
 
-		this.options.callBacks = {
-			fireCallback: this.fireCallback.bind(this)
-		};
+  update: function(data) {
+    // the data is saved right to the instance
+    Object.append(this, data);
+    this.fireEvent('queue', [this], 10);
+    return this;
+  },
 
-		var path = this.options.path;
-		if (!path.contains('?')) path += '?noCache=' + $time(); // cache in IE
+  findFile: function(id) {
+    for (var i = 0; i < this.fileList.length; i++) {
+      if (this.fileList[i].id == id) return this.fileList[i];
+    }
+    return null;
+  },
 
-		// container options for Swiff class
-		this.options.container = this.box = new Element('span', {'class': 'swiff-uploader-box'}).inject($(this.options.container) || document.body);
+  initializeSwiff: function() {
+    // extracted options for the swf
+    this.remote('xInitialize', {
+      typeFilter: this.options.typeFilter,
+      multiple: this.options.multiple,
+      queued: this.options.queued,
+      verbose: this.options.verbose,
+      width: this.options.width,
+      height: this.options.height,
+      passStatus: this.options.passStatus,
+      url: this.options.url,
+      method: this.options.method,
+      data: this.options.data,
+      mergeData: this.options.mergeData,
+      fieldName: this.options.fieldName,
+      fileSizeMin: this.options.fileSizeMin,
+      fileSizeMax: this.options.fileSizeMax,
+      allowDuplicates: this.options.allowDuplicates,
+      timeLimit: this.options.timeLimit,
+      policyFile: this.options.policyFile,
+      buttonImage: this.options.buttonImage
+    });
 
-		// target
-		this.target = $(this.options.target);
-		if (this.target) {
-			var scroll = window.getScroll();
-			this.box.setStyles({
-				position: 'absolute',
-				visibility: 'visible',
-				zIndex: this.options.zIndex,
-				overflow: 'hidden',
-				height: 1, width: 1,
-				top: scroll.y, left: scroll.x
-			});
+    this.loaded = true;
 
-			// we force wMode to transparent for the overlay effect
-			this.parent(path, {
-				params: {
-					wMode: 'transparent'
-				},
-				height: '100%',
-				width: '100%'
-			});
+    this.appendCookieData();
+  },
 
-			this.target.addEvent('mouseenter', this.reposition.bind(this, []));
+  targetRelay: function(name) {
+    if (this.target) this.target.fireEvent(name);
+  },
 
-			// button interactions, relayed to to the target
-			this.addEvents({
-				buttonEnter: this.targetRelay.bind(this, ['mouseenter']),
-				buttonLeave: this.targetRelay.bind(this, ['mouseleave']),
-				buttonDown: this.targetRelay.bind(this, ['mousedown']),
-				buttonDisable: this.targetRelay.bind(this, ['disable'])
-			});
+  reposition: function(coords) {
+    // update coordinates, manual or automatically
+    coords = coords || (this.target && this.target.offsetHeight)
+      ? this.target.getCoordinates(this.box.getOffsetParent())
+      : {top: window.getScrollTop(), left: 0, width: 40, height: 40}
+    this.box.setStyles(coords);
+    this.fireEvent('reposition', [coords, this.box, this.target]);
+  },
 
-			this.reposition();
-			window.addEvent('resize', this.reposition.bind(this, []));
-		} else {
-			this.parent(path);
-		}
+  setOptions: function(options) {
+    if (options) {
+      if (options.url) options.url = Swiff.Uploader.qualifyPath(options.url);
+      if (options.buttonImage) options.buttonImage = Swiff.Uploader.qualifyPath(options.buttonImage);
+      this.parent(options);
+      if (this.loaded) this.remote('xSetOptions', options);
+    }
+    return this;
+  },
 
-		this.inject(this.box);
+  setEnabled: function(status) {
+    this.remote('xSetEnabled', status);
+  },
 
-		this.fileList = [];
+  start: function() {
+    this.fireEvent('beforeStart');
+    this.remote('xStart');
+  },
 
-		this.size = this.uploading = this.bytesLoaded = this.percentLoaded = 0;
+  stop: function() {
+    this.fireEvent('beforeStop');
+    this.remote('xStop');
+  },
 
-		if (Browser.Plugins.Flash.version < 9) {
-			this.fireEvent('fail', ['flash']);
-		} else {
-			this.verifyLoad.delay(1000, this);
-		}
-	},
+  remove: function() {
+    this.fireEvent('beforeRemove');
+    this.remote('xRemove');
+  },
 
-	verifyLoad: function() {
-		if (this.loaded) return;
-		if (!this.object.parentNode) {
-			this.fireEvent('fail', ['disabled']);
-		} else if (this.object.style.display == 'none') {
-			this.fireEvent('fail', ['hidden']);
-		} else if (!this.object.offsetWidth) {
-			this.fireEvent('fail', ['empty']);
-		}
-	},
+  fileStart: function(file) {
+    this.remote('xFileStart', file.id);
+  },
 
-	fireCallback: function(name, args) {
-		// file* callbacks are relayed to the specific file
-		if (name.substr(0, 4) == 'file') {
-			// updated queue data is the second argument
-			if (args.length > 1) this.update(args[1]);
-			var data = args[0];
+  fileStop: function(file) {
+    this.remote('xFileStop', file.id);
+  },
 
-			var file = this.findFile(data.id);
-			this.fireEvent(name, file || data, 5);
-			if (file) {
-				var fire = name.replace(/^file([A-Z])/, function($0, $1) {
-					return $1.toLowerCase();
-				});
-				file.update(data).fireEvent(fire, [data], 10);
-			}
-		} else {
-			this.fireEvent(name, args, 5);
-		}
-	},
+  fileRemove: function(file) {
+    this.remote('xFileRemove', file.id);
+  },
 
-	update: function(data) {
-		// the data is saved right to the instance
-		$extend(this, data);
-		this.fireEvent('queue', [this], 10);
-		return this;
-	},
+  fileRequeue: function(file) {
+    this.remote('xFileRequeue', file.id);
+  },
 
-	findFile: function(id) {
-		for (var i = 0; i < this.fileList.length; i++) {
-			if (this.fileList[i].id == id) return this.fileList[i];
-		}
-		return null;
-	},
+  appendCookieData: function() {
+    var append = this.options.appendCookieData;
+    if (!append) return;
 
-	initializeSwiff: function() {
-		// extracted options for the swf
-		this.remote('initialize', {
-			width: this.options.width,
-			height: this.options.height,
-			typeFilter: this.options.typeFilter,
-			multiple: this.options.multiple,
-			queued: this.options.queued,
-			url: this.options.url,
-			method: this.options.method,
-			data: this.options.data,
-			mergeData: this.options.mergeData,
-			fieldName: this.options.fieldName,
-			verbose: this.options.verbose,
-			fileSizeMin: this.options.fileSizeMin,
-			fileSizeMax: this.options.fileSizeMax,
-			allowDuplicates: this.options.allowDuplicates,
-			timeLimit: this.options.timeLimit,
-			buttonImage: this.options.buttonImage,
-			policyFile: this.options.policyFile
-		});
+    var hash = {};
+    document.cookie.split(/;\s*/).each(function(cookie) {
+      cookie = cookie.split('=');
+      if (cookie.length == 2) {
+        hash['\"' + decodeURIComponent(cookie[0]) + '\"'] = decodeURIComponent(cookie[1]);
+      }
+    });
 
-		this.loaded = true;
+    var data = this.options.data || {};
+    if (typeOf(append) == 'string') data[append] = hash;
+    else Object.append(data, hash);
 
-		this.appendCookieData();
-	},
+    this.setOptions({data: data});
+  },
 
-	targetRelay: function(name) {
-		if (this.target) this.target.fireEvent(name);
-	},
+  processFiles: function(successraw, failraw, queue) {
+    var cls = this.options.fileClass || Swiff.Uploader.File;
 
-	reposition: function(coords) {
-		// update coordinates, manual or automatically
-		coords = coords || (this.target && this.target.offsetHeight)
-			? this.target.getCoordinates(this.box.getOffsetParent())
-			: {top: window.getScrollTop(), left: 0, width: 40, height: 40}
-		this.box.setStyles(coords);
-		this.fireEvent('reposition', [coords, this.box, this.target]);
-	},
+    var fail = [], success = [];
 
-	setOptions: function(options) {
-		if (options) {
-			if (options.url) options.url = Swiff.Uploader.qualifyPath(options.url);
-			if (options.buttonImage) options.buttonImage = Swiff.Uploader.qualifyPath(options.buttonImage);
-			this.parent(options);
-			if (this.loaded) this.remote('setOptions', options);
-		}
-		return this;
-	},
+    if (successraw) {
+      successraw.each(function(data) {
+        var ret = new cls(this, data);
+        if (!ret.validate()) {
+          ret.remove.delay(10, ret);
+          fail.push(ret);
+        } else {
+          this.size += data.size;
+          this.fileList.push(ret);
+          success.push(ret);
+          ret.render();
+        }
+      }, this);
 
-	setEnabled: function(status) {
-		this.remote('setEnabled', status);
-	},
+      this.fireEvent('selectSuccess', [success], 10);
+    }
 
-	start: function() {
-		this.fireEvent('beforeStart');
-		this.remote('start');
-	},
+    if (failraw || fail.length) {
+      fail.append((failraw) ? failraw.map(function(data) {
+        return new cls(this, data);
+      }, this) : []).each(function(file) {
+        file.invalidate().render();
+      });
 
-	stop: function() {
-		this.fireEvent('beforeStop');
-		this.remote('stop');
-	},
+      this.fireEvent('selectFail', [fail], 10);
+    }
 
-	remove: function() {
-		this.fireEvent('beforeRemove');
-		this.remote('remove');
-	},
+    this.update(queue);
 
-	fileStart: function(file) {
-		this.remote('fileStart', file.id);
-	},
-
-	fileStop: function(file) {
-		this.remote('fileStop', file.id);
-	},
-
-	fileRemove: function(file) {
-		this.remote('fileRemove', file.id);
-	},
-
-	fileRequeue: function(file) {
-		this.remote('fileRequeue', file.id);
-	},
-
-	appendCookieData: function() {
-		var append = this.options.appendCookieData;
-		if (!append) return;
-
-		var hash = {};
-		document.cookie.split(/;\s*/).each(function(cookie) {
-			cookie = cookie.split('=');
-			if (cookie.length == 2) {
-			    hash['\"' + decodeURIComponent(cookie[0]) + '\"'] = decodeURIComponent(cookie[1]);
-			}
-		});
-
-		var data = this.options.data || {};
-		if ($type(append) == 'string') data[append] = hash;
-		else $extend(data, hash);
-
-		this.setOptions({data: data});
-	},
-
-	processFiles: function(successraw, failraw, queue) {
-		var cls = this.options.fileClass || Swiff.Uploader.File;
-
-		var fail = [], success = [];
-
-		if (successraw) {
-			successraw.each(function(data) {
-				var ret = new cls(this, data);
-				if (!ret.validate()) {
-					ret.remove.delay(10, ret);
-					fail.push(ret);
-				} else {
-					this.size += data.size;
-					this.fileList.push(ret);
-					success.push(ret);
-					ret.render();
-				}
-			}, this);
-
-			this.fireEvent('selectSuccess', [success], 10);
-		}
-
-		if (failraw || fail.length) {
-			fail.extend((failraw) ? failraw.map(function(data) {
-				return new cls(this, data);
-			}, this) : []).each(function(file) {
-				file.invalidate().render();
-			});
-
-			this.fireEvent('selectFail', [fail], 10);
-		}
-
-		this.update(queue);
-
-		if (this.options.instantStart && success.length) this.start();
-	}
+    if (this.options.instantStart && success.length) this.start();
+  }
 
 });
 
