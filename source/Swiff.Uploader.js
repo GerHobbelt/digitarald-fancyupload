@@ -324,7 +324,8 @@ Swiff.Uploader = new Class({
       cookie = cookie.split('=');
 	  if (typeof console !== 'undefined' && console.log) console.log('appendCookieData: cookie: "' + cookie[0] + '"(' + cookie.length + ') = "' + (cookie.length > 1 ? cookie[1] : '???') + '"');
       if (cookie.length == 2) {
-        hash['\"' + decodeURIComponent(cookie[0]) + '\"'] = decodeURIComponent(cookie[1]);    // allow session IDs such as the ASP.NET ones, which come with an underscore, etc.
+        //hash['\"' + decodeURIComponent(cookie[0]) + '\"'] = decodeURIComponent(cookie[1]);    // allow session IDs such as the ASP.NET ones, which come with a dot, etc.
+        hash[decodeURIComponent(cookie[0])] = decodeURIComponent(cookie[1]);
       }
     });
 
