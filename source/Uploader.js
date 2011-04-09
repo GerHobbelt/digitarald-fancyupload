@@ -321,7 +321,7 @@ Uploader.File = new Class({
         else merged.data = Object.merge(base.data, options.data);
       }
 
-      var query = (typeOf(merged.data) == 'string') ? merged.data : Hash.toQueryString(merged.data);
+      var query = (typeOf(merged.data) == 'string') ? merged.data : Object.toQueryString(merged.data);
 
       if (query.length) {
         if (merged.method == 'get') {
