@@ -98,8 +98,8 @@ var Uploader = new Class({
 
 		var align = (Browser.Engine.trident) ? 'left' : 'right';
 		doc.body.innerHTML = '<form method="post" enctype="multipart/form-data" id="form">' +
-			'<input type="submit" /><div id="data"></div></form>' +
 			'<input type="file" id="file" style="position:absolute;' + align + ':0;top:0" />' +
+			'<input type="submit" /><div id="data"></div></form>' +
 			'<style type="text/css">*{margin:0;padding:0;border:0;overflow:hidden;cursor:pointer;}</style>';
 
 		this.doc = doc;
@@ -347,7 +347,7 @@ Uploader.File = new Class({
 		var form = doc.forms[0];
 		form.action = merged.url;
 
-		var input = form.elements[form.elements.length - 1];
+		var input = form.elements[0];
 		input.name = merged.fieldName || 'Filedata';
 
 		this.status = Uploader.STATUS_RUNNING;
