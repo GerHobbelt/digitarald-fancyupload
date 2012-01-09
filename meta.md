@@ -251,7 +251,7 @@ Requirements {#requirements}
 
 **It does not depend on any server-side architecture or language.**
 
-### MooTools JavaScript Framework 1.2
+### MooTools JavaScript Framework 1.3+
 
 You can include MooTools via [Google AJAX Libraries API](http://code.google.com/apis/ajaxlibs/documentation/#mootools),
 follow the link for more information and why it can be good for your site.

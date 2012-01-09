@@ -7,7 +7,7 @@ menu and queued upload with an animated progress bar. It is easy to setup, is se
 completely styleable via CSS and XHTML and uses [MooTools][] to work in all modern browsers.
 
 ### Depencies
-  Mootools 1.3
+  Mootools 1.3 or later
 
 ### Keywords: {#keywords}
 
